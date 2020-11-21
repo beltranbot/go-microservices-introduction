@@ -18,7 +18,7 @@ type Product struct {
 	DeletedOn   string  `json:"-"`
 }
 
-// Products type
+// Products type is a collection of Product
 type Products []*Product
 
 // ToJSON method
@@ -27,9 +27,28 @@ func (p *Products) ToJSON(w io.Writer) error {
 	return e.Encode(p)
 }
 
+// FromJSON method
+func (p *Product) FromJSON(r io.Reader) error {
+	e := json.NewDecoder(r)
+	return e.Decode(p)
+}
+
 // GetProducts method
 func GetProducts() Products {
 	return productList
+}
+
+// AddProduct func
+func AddProduct(p *Product) {
+	p.ID = getNextID()
+	productList = append(productList, p)
+
+}
+
+// getNextID func
+func getNextID() int {
+	lp := productList[len(productList)-1]
+	return lp.ID + 1
 }
 
 var productList = []*Product{
