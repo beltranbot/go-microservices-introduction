@@ -3,10 +3,10 @@ package handlers
 import (
 	"log"
 	"net/http"
-	"regexp"
 	"strconv"
 
 	"github.com/beltranbot/go-microservices-introduction/data"
+	"github.com/gorilla/mux"
 )
 
 // Products struct
@@ -19,48 +19,8 @@ func NewProducts(log *log.Logger) *Products {
 	return &Products{log}
 }
 
-// ServeHTTP func
-func (p *Products) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		p.getProducts(rw, r)
-		return
-	}
-
-	if r.Method == http.MethodPost {
-		p.addProduct(rw, r)
-		return
-	}
-
-	if r.Method == http.MethodPut {
-		// expect the id in the URI
-		re := regexp.MustCompile(`/([0-9]+)`)
-		g := re.FindAllStringSubmatch(r.URL.Path, -1)
-
-		if len(g) != 1 {
-			http.Error(rw, "Invalid URI", http.StatusBadRequest)
-		}
-
-		if len(g[0]) != 2 {
-			http.Error(rw, "Invalid URI", http.StatusBadRequest)
-		}
-
-		idString := g[0][1]
-		id, err := strconv.Atoi(idString)
-		if err != nil {
-			http.Error(rw, "Invalid URI", http.StatusBadRequest)
-		}
-		p.updateProduct(id, rw, r)
-		return
-	}
-
-	// handle update
-
-	// catch all
-	// if no method is satisfied return an error
-	rw.WriteHeader(http.StatusMethodNotAllowed)
-}
-
-func (p *Products) getProducts(rw http.ResponseWriter, r *http.Request) {
+// GetProducts func
+func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
 	p.log.Println("Handle POST Products")
 
 	// fetch the prodcuts from the datastore
@@ -74,7 +34,8 @@ func (p *Products) getProducts(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (p *Products) addProduct(rw http.ResponseWriter, r *http.Request) {
+// AddProduct func
+func (p *Products) AddProduct(rw http.ResponseWriter, r *http.Request) {
 	p.log.Println("Handle POST Products")
 
 	product := &data.Product{}
@@ -87,11 +48,20 @@ func (p *Products) addProduct(rw http.ResponseWriter, r *http.Request) {
 	data.AddProduct(product)
 }
 
-func (p *Products) updateProduct(id int, rw http.ResponseWriter, r *http.Request) {
-	p.log.Println("Handle PUT Products")
+// UpdateProducts func
+func (p *Products) UpdateProducts(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r) // extract params from url
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		http.Error(rw, "Unable to conver id", http.StatusInternalServerError)
+		return
+	}
+
+	p.log.Println("Handle PUT Products", id)
 
 	product := &data.Product{}
-	err := product.FromJSON(r.Body)
+	err = product.FromJSON(r.Body)
 
 	if err != nil {
 		http.Error(rw, "Unable to unmarshal json", http.StatusBadRequest)

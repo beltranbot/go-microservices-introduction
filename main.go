@@ -9,18 +9,25 @@ import (
 	"time"
 
 	"github.com/beltranbot/go-microservices-introduction/handlers"
+	"github.com/gorilla/mux"
 )
 
 func main() {
 	mainLogger := log.New(os.Stdout, "product-api", log.LstdFlags)
-	helloHandler := handlers.NewHello(mainLogger)
-	goodbyeHandler := handlers.NewGoodbye(mainLogger)
+	// helloHandler := handlers.NewHello(mainLogger)
+	// goodbyeHandler := handlers.NewGoodbye(mainLogger)
 	productHandler := handlers.NewProducts(mainLogger)
 
-	serverMux := http.NewServeMux()
-	serverMux.Handle("/", productHandler)
-	serverMux.Handle("/hello", helloHandler)
-	serverMux.Handle("/goodbye", goodbyeHandler)
+	serverMux := mux.NewRouter()
+
+	getRouter := serverMux.Methods(http.MethodGet).Subrouter()
+	getRouter.HandleFunc("/", productHandler.GetProducts)
+
+	putRouter := serverMux.Methods(http.MethodPut).Subrouter()
+	putRouter.HandleFunc("/{id:[0-9]+}", productHandler.UpdateProducts)
+
+	postRouter := serverMux.Methods(http.MethodPost).Subrouter()
+	postRouter.HandleFunc("/", productHandler.AddProduct)
 
 	server := &http.Server{
 		Addr:         ":9090",
