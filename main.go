@@ -15,9 +15,11 @@ func main() {
 	mainLogger := log.New(os.Stdout, "product-api", log.LstdFlags)
 	helloHandler := handlers.NewHello(mainLogger)
 	goodbyeHandler := handlers.NewGoodbye(mainLogger)
+	productHandler := handlers.NewProducts(mainLogger)
 
 	serverMux := http.NewServeMux()
-	serverMux.Handle("/", helloHandler)
+	serverMux.Handle("/", productHandler)
+	serverMux.Handle("/hello", helloHandler)
 	serverMux.Handle("/goodbye", goodbyeHandler)
 
 	server := &http.Server{
